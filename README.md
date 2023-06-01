@@ -18,8 +18,8 @@ This is a work in progress and all products are under active development. The co
 
 ## Installation
 
-You must have a current version of R (>v4.2) and [JAGS (
-\qet v4.3.1)](https://sourceforge.net/projects/mcmc-jags/) to run the code presented here.  Follow the instructions under [Usage](#usage) below to use the code and provide feedback.
+You must have a current version of R ($>$v4.2) and [JAGS (
+$\geq$ v4.3.1)](https://sourceforge.net/projects/mcmc-jags/) to run the code presented here.  Follow the instructions under [Usage](#usage) below to use the code and provide feedback.
 
 ## Usage
 
