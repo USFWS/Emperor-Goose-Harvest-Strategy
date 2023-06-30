@@ -5,7 +5,11 @@
 # 20210916 (1) revise to do forward sims based on harvest rate. 
 #              This allows harvest to decline with population size. 
 # 20221116 (1) commented out dev models and worked on stochastic model
-#          (2) revised to fully sample posterior initial population size (N.tot in 2022)
+#          (2) revised to fully sample posterior initial population size 
+#              (N.tot in 2022)
+# 20230629 (1) revised prediction model to reflect new (2023) jags model; 
+#              this include observer-specific observation model and the current 
+#              decision index of the average estimate between observers 
 
 #library(ggplot2)
 #load posterior
@@ -280,48 +284,64 @@
 ## modify function for original 2016 data and posterior
 ## 
 project.pop2 <- function(
-  #population projection at constant parameters is default
+  #these inputs are scalar, 
+  #  can use a sample of posterior or a summary value (posterior mean)
+  #default is simulation at posterior mean
+  #also assume that the observers are constant for observation model 
+  # even when stochastic = FALSE, 
   Tmax = 100,
-  n1 = out$mean$N.tot, #need all population size estimates so we can translate to harvest rate
+  n1 = out$mean$N.tot, 
   r = out$mean$r.max, 
   theta = out$mean$theta,
   K = out$mean$CC, 
   Hgreen = out$mean$mu.green,
   Hred = out$mean$m.har, 
   sdH = NA,
+  Hp = out$mean$m.har.p,
+  sdHp = NA,
   sdpop = NA,
   q = out$mean$q, 
+  alpha1 = c(out$mean$alpha1[5], out$mean$alpha1[10]), #default is HMW and MAS
+  sdesp = out$mean$sd.esp, 
+  BETA = NA, #linear model slope
+  SE = NA, #linear model slope SE
+  SIGMA = NA, #linear model RMSE
+  DF = NA, #linear model degrees of freedom
+  crip = out$mean$c, #crippling probability
   t_close = 23000, #closure threshold, 23000 is 2016 management plan default
   total = TRUE, 
   stochastic = TRUE){
   
-  crip <- rbeta(1, 50, 150) #mean for rbeta =0.25, beta distribution parameters, could sample from posterior
-  
   pop <- har <- hunt <- numeric(Tmax) #rep(0, Tmax)
   pop[1] <- n1[length(n1)] #starting population size
-  s <- rchisq(1, 35) #linear model for observation error
+  s <- rchisq(1, DF) #linear model for observation error
+  beta <- rnorm(1, BETA, SE)
   
   for(t in 2:(Tmax)){
     if(stochastic == FALSE){
-      mu <- q*pop[t-1]
-      sigma.obs <- dnorm(0.056*mu, sqrt(((307.9^2)*35)/s) )
-      obs <- rnorm(1, mu, sigma.obs)
-      hunt[t-1] <- ifelse(obs < t_close, 0, 1)
+      mu <- q*pop[t-1] + alpha1
+      sigma.obs <- rnorm(2, beta*mu, sqrt(((SIGMA^2)*DF)/s) )
+      obs <- rnorm(2, mu, sigma.obs)
+      hunt[t-1] <- ifelse(mean(obs) < t_close, 0, 1)
       #Note: har[t-1] is the harvest from t-1 to t
-      har[t-1] <- ifelse(obs < t_close, rnorm(1, Hred, sdH), rnorm(1, Hgreen, sdH))
+      har[t-1] <- ifelse(mean(obs) < t_close, rnorm(1, Hred, sdH), 
+                         rnorm(1, Hgreen, sdH)+rnorm(1, Hp, sdHp))
       har[t-1] <- ifelse(har[t-1] < 0, 0, har[t-1]) #check that harvest is not negative
-      pop[t] <- pop[t-1] + pop[t-1]*r*(1-(pop[t-1]/K)^theta) - har[t-1]*(1 - exp(-0.0001*pop[t-1]))/(1-crip)
+      pop[t] <- pop[t-1] + pop[t-1]*r*(1-(pop[t-1]/K)^theta) - 
+        har[t-1]*(1 - exp(-0.0001*pop[t-1]))/(1-crip)
       pop[t] <- ifelse(pop[t]<0,0,pop[t])
     }
     if(stochastic == TRUE){
-      mu <- q*pop[t-1]
-      sigma.obs <- dnorm(0.056*mu, sqrt(((307.9^2)*35)/s) )
-      obs <- rnorm(1, mu, sigma.obs) 
-      hunt[t-1] <- ifelse(obs < t_close, 0, 1)
+      mu <- q*pop[t-1] + alpha1
+      sigma.obs <- rnorm(2, beta*mu, sqrt(((SIGMA^2)*DF)/s) )
+      obs <- rnorm(2, mu, sigma.obs)
+      hunt[t-1] <- ifelse(mean(obs) < t_close, 0, 1)
       #Note: har[t-1] is the harvest from t-1 to t
-      har[t-1] <- ifelse(obs < t_close, rnorm(1, Hred, sdH), rnorm(1, Hgreen, sdH))
+      har[t-1] <- ifelse(mean(obs) < t_close, rnorm(1, Hred, sdH), 
+                         rnorm(1, Hgreen, sdH)+rnorm(1, Hp, sdHp))
       har[t-1] <- ifelse(har[t-1] < 0, 0, har[t-1]) #check that harvest is not negative
-      pop[t] <- pop[t-1] + pop[t-1]*r*(1-(pop[t-1]/K)^theta) - har[t-1]*(1 - exp(-0.0001*pop[t-1]))/(1-crip)
+      pop[t] <- pop[t-1] + pop[t-1]*r*(1-(pop[t-1]/K)^theta) - 
+        har[t-1]*(1 - exp(-0.0001*pop[t-1]))/(1-crip)
       pop[t] <- max(pop[t], 1e-5)
       pop[t] <- rlnorm(1, log(pop[t]), sdpop)
       if(pop[t] < 1){ 
@@ -335,30 +355,40 @@ project.pop2 <- function(
 }
 
 # out <- readRDS("out2.harOriginal.RDS")
-# Nsamples <- 2000
-# Tmax <- 100
-# pick <- sample(1:length(out$sims.list$r.max), Nsamples)
-# results <- matrix(NA, Tmax, Nsamples)
-# for(i in 1:Nsamples){
-#   results[,i] <- project.pop2(n1 = out$sims.list$N.tot[i,], 
-#                              r = out$sims.list$r.max[i], 
-#                              theta = out$sims.list$theta[i],
-#                              K = out$sims.list$CC[i], 
-#                              Hgreen = out$sims.list$mu.green[i],
-#                              Hred = out$sims.list$m.har[i],
-#                              sdH = out$sims.list$sigma.har[i],
-#                              sdpop = out$sims.list$sigma.proc[i],
-#                              q = out$sims.list$q[i],
-#                              total = FALSE)$pop
-# }
-# df <- data.frame(Time = 1:Tmax, results) 
-# gplot <- ggplot()
-# for(i in 1:100){ #show just 100 samples
-#   df2 <- data.frame(Time=df$Time, Pop=df[,i+1])
-#   gplot <- gplot + geom_line(data=df2, aes(x=Time, y=Pop))
-# }
-# gplot <- gplot +
-#   labs(x="Year", y="Total Birds") + 
-#   geom_hline(yintercept = 23000, color="red")
-# print(gplot)
+Nsamples <- 10
+Tmax <- 100
+pick <- sample(1:length(out$sims.list$r.max), Nsamples)
+results <- matrix(NA, Tmax, Nsamples)
+for(i in 1:Nsamples){
+  results[,i] <- project.pop2(n1 = out$sims.list$N.tot[i,],
+                             r = out$sims.list$r.max[i],
+                             theta = out$sims.list$theta[i],
+                             K = out$sims.list$CC[i],
+                             Hgreen = out$sims.list$mu.green[i],
+                             Hred = out$sims.list$m.har[i],
+                             sdH = out$sims.list$sigma.har[i],
+                             Hp = out$sims.list$m.har.p,
+                             sdHp = out$sims.list$m.har.p,
+                             sdpop = out$sims.list$sigma.proc[i],
+                             q = out$sims.list$q[i],
+                             alpha1 = c(out$sims.list$alpha1[i, 5], 
+                                        out$sims.list$alpha1[i, 10]),
+                             sdesp = out$sims.list$sd.esp[i],
+                             BETA = fit$coefficients[1], #linear model slope
+                             SE = fit$coefficients[2], #linear model slope SE
+                             SIGMA = fit$sigma, #linear model RMSE
+                             DF = fit$df, #linear model degrees of freedom
+                             crip = out$sims.list$c[i], #crippling probability
+                             total = FALSE)$pop
+}
+df <- data.frame(Time = 1:Tmax, results)
+gplot <- ggplot()
+for(i in 1:100){ #show just 100 samples
+  df2 <- data.frame(Time=df$Time, Pop=df[,i+1])
+  gplot <- gplot + geom_line(data=df2, aes(x=Time, y=Pop))
+}
+gplot <- gplot +
+  labs(x="Year", y="Total Birds") +
+  geom_hline(yintercept = 23000, color="red")
+print(gplot)
 

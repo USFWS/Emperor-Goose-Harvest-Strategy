@@ -230,24 +230,26 @@ inits <- function(){list(
 )}
 # Parameters monitored
 parameters <- c("r.max", "sigma.proc", "N.est", "CC", "theta", "q", "N.tot", 
-                "mu.green", "har", "m.har", "sigma.har", "c", "sd.obs", "alpha1", 
-                "VIF", "sd.esp")
+                "mu.green", "har", "m.har", "m.har.p", "sigma.har", "sd.har.p", 
+                "c", "sd.obs", "alpha1", "VIF", "sd.esp")
 # Call JAGS from R
 #out is with original prior on mu.green
 out <- jags(jags.data, inits, parameters, "theta.logistic.emgo.jags", 
-            n.chains = 4, n.thin = 2, n.iter = 110000, n.burnin = 9000, n.adapt=1000,
+            n.chains = 4, n.thin = 10, n.iter = 300000, n.burnin = 190000, n.adapt=10000,
             parallel=TRUE)
-saveRDS(out1, file = "out1.harOriginal.RDS")
-## could not get convergence in 500K iters for CC and q parameters, try more
-# took 900K for convergence
+## near convergence in 100K iters, set to 200K, still max(Rhat) >~1.1, set to 300K
+summary(unlist(out$Rhat))
+##  convergence!
+saveRDS(out, file = "data/out.RDS")
+################################################################################
 # in hindsight (in 2022), above prior seems way too high, what if this is lowered?
-jags.data2 <- jags.data
-jags.data2$pmu.mean = log(5693) #lowered to mean of harvest in 2017 to 2019
-out2 <- jags(jags.data2, inits, parameters, "theta.logistic.emgo.jags", 
-            n.chains = 4, n.thin = 4, n.iter = 1200000, n.burnin = 1000000, n.adapt=10000, 
-            parallel=TRUE)
-# needed above iters to converge
-saveRDS(out2, file = "out2.harOriginal.RDS")
+# jags.data2 <- jags.data
+# jags.data2$pmu.mean = log(5693) #lowered to mean of harvest in 2017 to 2019
+# out2 <- jags(jags.data2, inits, parameters, "theta.logistic.emgo.jags", 
+#             n.chains = 4, n.thin = 10, n.iter = 200000, n.burnin = 90000, n.adapt=10000, 
+#             parallel=TRUE)
+# # needed above iters to converge
+# saveRDS(out2, file = "out2.harOriginal.RDS")
 
 # #plot population time series and estimate
 # out <- readRDS("out.RDS")
@@ -264,7 +266,7 @@ saveRDS(out2, file = "out2.harOriginal.RDS")
 # points(ykd$Year, ci[2,], pch=22, bg=1)
 # 
 # 
-out <- out1
+#out <- out1
 plot(ykd$Year, ykd$itotal, pch=16, ylim=c(0, 50000),  ylab="YKD indicated breeding total birds",
      xlab="Year", main="Emperor goose population, harvest, and state-space model")
 arrows(x0=ykd$Year, x1=ykd$Year, y0=ykd$itotal - 2*ykd$itotal.se,y1=ykd$itotal + 2*ykd$itotal.se,
@@ -286,9 +288,13 @@ arrows(x0=har1$Year[-c(33:38)], x1=har1$Year[-c(33:38)], y0=(har1$Harvest[-c(33:
        y1=(har1$Harvest[-c(33:38)] + 2*har1$SE[-c(33:38)]),
        length=0, col="black")
 points(2017:2022+0.1, out$mean$har[33:38], pch=16, col="darkgray")
-legend("topleft", legend=c("Survey Estimate", "State-space model", "Historical harvest data",
+points(2017:2022+0.1, jags.data$har.p[33:38], pch=2, col="black")
+legend("topleft", legend=c("Survey Estimate", "State-space model", 
+                           "Historical harvest data",
+                           "Permit Harvest",
                            "AMBCC harvest survey-C&T season"),
-       pch=c(16, 16, 1, 22), col=c(1, "gray50", 1, 1), pt.bg=c(NA, NA, NA, 1))
+       pch=c(16, 16, 1, 2, 22), col=c(1, "gray50", 1, 1, 1), 
+       pt.bg=c(NA, NA, NA, NA, 1))
 ################################################################################
 ##
 ## Now fit the model with only data up to 2016 and with 2016 prior.
