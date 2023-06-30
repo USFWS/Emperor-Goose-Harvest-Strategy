@@ -316,11 +316,13 @@ project.pop2 <- function(
   pop[1] <- n1[length(n1)] #starting population size
   s <- rchisq(1, DF) #linear model for observation error
   beta <- rnorm(1, BETA, SE)
+  esp <- rnorm(length(alpha1), 0, sdesp)
   
   for(t in 2:(Tmax)){
     if(stochastic == FALSE){
-      mu <- q*pop[t-1] + alpha1
-      sigma.obs <- rnorm(2, beta*mu, sqrt(((SIGMA^2)*DF)/s) )
+      mu <- q*pop[t-1] + alpha1 + esp
+      sigma.obs <- rnorm(2, beta*mu, sqrt( ((SIGMA^2)*DF)/s ) )
+      sigma.obs <- ifelse(sigma.obs < 0, 0, sigma.obs)
       obs <- rnorm(2, mu, sigma.obs)
       hunt[t-1] <- ifelse(mean(obs) < t_close, 0, 1)
       #Note: har[t-1] is the harvest from t-1 to t
@@ -332,8 +334,9 @@ project.pop2 <- function(
       pop[t] <- ifelse(pop[t]<0,0,pop[t])
     }
     if(stochastic == TRUE){
-      mu <- q*pop[t-1] + alpha1
+      mu <- q*pop[t-1] + alpha1 + esp
       sigma.obs <- rnorm(2, beta*mu, sqrt(((SIGMA^2)*DF)/s) )
+      sigma.obs <- ifelse(sigma.obs < 0, 0, sigma.obs)
       obs <- rnorm(2, mu, sigma.obs)
       hunt[t-1] <- ifelse(mean(obs) < t_close, 0, 1)
       #Note: har[t-1] is the harvest from t-1 to t
@@ -355,7 +358,7 @@ project.pop2 <- function(
 }
 
 # out <- readRDS("out2.harOriginal.RDS")
-Nsamples <- 10
+Nsamples <- 1000
 Tmax <- 100
 pick <- sample(1:length(out$sims.list$r.max), Nsamples)
 results <- matrix(NA, Tmax, Nsamples)
@@ -377,13 +380,16 @@ for(i in 1:Nsamples){
                              BETA = fit$coefficients[1], #linear model slope
                              SE = fit$coefficients[2], #linear model slope SE
                              SIGMA = fit$sigma, #linear model RMSE
-                             DF = fit$df, #linear model degrees of freedom
+                             DF = fit$df[2], #linear model degrees of freedom
                              crip = out$sims.list$c[i], #crippling probability
                              total = FALSE)$pop
 }
+#for probability of hunting
+#hist(colMeans(results))
+#for population
 df <- data.frame(Time = 1:Tmax, results)
 gplot <- ggplot()
-for(i in 1:100){ #show just 100 samples
+for(i in 1:Nsamples){ #show just 100 samples
   df2 <- data.frame(Time=df$Time, Pop=df[,i+1])
   gplot <- gplot + geom_line(data=df2, aes(x=Time, y=Pop))
 }
@@ -391,4 +397,5 @@ gplot <- gplot +
   labs(x="Year", y="Total Birds") +
   geom_hline(yintercept = 23000, color="red")
 print(gplot)
-
+#extinction probability
+sum(apply(results, 2, function(x){min(x) == 0}))/Nsamples

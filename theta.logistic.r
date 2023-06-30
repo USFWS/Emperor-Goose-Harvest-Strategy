@@ -95,7 +95,7 @@ ggplot(data=ykd) +
 #fit linear model for missing data population data
 #estimate average CV of index and mse around cv expectation
 ggplot(data = ykd, aes(x=itotal, y=itotal.se)) + geom_point() + 
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm", formula = y~x-1)
 fit <- summary(lm(ykd$itotal.se~ykd$itotal-1))
 ################################################################################
 # Specify JAGS Model
