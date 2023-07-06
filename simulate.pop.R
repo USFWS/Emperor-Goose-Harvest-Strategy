@@ -358,44 +358,44 @@ project.pop2 <- function(
 }
 
 # out <- readRDS("out2.harOriginal.RDS")
-Nsamples <- 1000
-Tmax <- 100
-pick <- sample(1:length(out$sims.list$r.max), Nsamples)
-results <- matrix(NA, Tmax, Nsamples)
-for(i in 1:Nsamples){
-  results[,i] <- project.pop2(n1 = out$sims.list$N.tot[i,],
-                             r = out$sims.list$r.max[i],
-                             theta = out$sims.list$theta[i],
-                             K = out$sims.list$CC[i],
-                             Hgreen = out$sims.list$mu.green[i],
-                             Hred = out$sims.list$m.har[i],
-                             sdH = out$sims.list$sigma.har[i],
-                             Hp = out$sims.list$m.har.p,
-                             sdHp = out$sims.list$m.har.p,
-                             sdpop = out$sims.list$sigma.proc[i],
-                             q = out$sims.list$q[i],
-                             alpha1 = c(out$sims.list$alpha1[i, 5], 
-                                        out$sims.list$alpha1[i, 10]),
-                             sdesp = out$sims.list$sd.esp[i],
-                             BETA = fit$coefficients[1], #linear model slope
-                             SE = fit$coefficients[2], #linear model slope SE
-                             SIGMA = fit$sigma, #linear model RMSE
-                             DF = fit$df[2], #linear model degrees of freedom
-                             crip = out$sims.list$c[i], #crippling probability
-                             total = FALSE)$pop
-}
-#for probability of hunting
-#hist(colMeans(results))
-#for population
-df <- data.frame(Time = 1:Tmax, results)
-gplot <- ggplot()
-for(i in 1:Nsamples){ #show just 100 samples
-  df2 <- data.frame(Time=df$Time, Pop=df[,i+1])
-  gplot <- gplot + geom_line(data=df2, aes(x=Time, y=Pop))
-}
-gplot <- gplot +
-  labs(x="Year", y="Total Birds") +
-  geom_hline(yintercept = 23000, color="red")
-print(gplot)
-#extinction probability
-sum(apply(results, 2, function(x){min(x) == 0}))/Nsamples
+# Nsamples <- 1000
+# Tmax <- 100
+# pick <- sample(1:length(out$sims.list$r.max), Nsamples)
+# results <- matrix(NA, Tmax, Nsamples)
+# for(i in 1:Nsamples){
+#   results[,i] <- project.pop2(n1 = out$sims.list$N.tot[i,],
+#                              r = out$sims.list$r.max[i],
+#                              theta = out$sims.list$theta[i],
+#                              K = out$sims.list$CC[i],
+#                              Hgreen = out$sims.list$mu.green[i],
+#                              Hred = out$sims.list$m.har[i],
+#                              sdH = out$sims.list$sigma.har[i],
+#                              Hp = out$sims.list$m.har.p,
+#                              sdHp = out$sims.list$m.har.p,
+#                              sdpop = out$sims.list$sigma.proc[i],
+#                              q = out$sims.list$q[i],
+#                              alpha1 = c(out$sims.list$alpha1[i, 5], 
+#                                         out$sims.list$alpha1[i, 10]),
+#                              sdesp = out$sims.list$sd.esp[i],
+#                              BETA = fit$coefficients[1], #linear model slope
+#                              SE = fit$coefficients[2], #linear model slope SE
+#                              SIGMA = fit$sigma, #linear model RMSE
+#                              DF = fit$df[2], #linear model degrees of freedom
+#                              crip = out$sims.list$c[i], #crippling probability
+#                              total = FALSE)$pop
+# }
+# #for probability of hunting
+# #hist(colMeans(results))
+# #for population
+# df <- data.frame(Time = 1:Tmax, results)
+# gplot <- ggplot()
+# for(i in 1:Nsamples){ #show just 100 samples
+#   df2 <- data.frame(Time=df$Time, Pop=df[,i+1])
+#   gplot <- gplot + geom_line(data=df2, aes(x=Time, y=Pop))
+# }
+# gplot <- gplot +
+#   labs(x="Year", y="Total Birds") +
+#   geom_hline(yintercept = 23000, color="red")
+# print(gplot)
+# #extinction probability
+# sum(apply(results, 2, function(x){min(x) == 0}))/Nsamples
