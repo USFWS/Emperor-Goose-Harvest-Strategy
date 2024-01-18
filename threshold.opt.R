@@ -1,4 +1,5 @@
 # function to iterate through closure thresholds and find cummulative harvest and population size or utility
+library(tidyverse)
 #load data
 out <- readRDS("data/out.RDS")
 #load simulate function
@@ -75,7 +76,7 @@ for(t in 1:length(t_red)){
 }
 
 saveRDS(df, file = "data/optim1.RDS")
-# df <- readRDS("optim1..harOriginal.RDS")
+# df <- readRDS("data/optim1.RDS")
 df$Clower <- df$cumHar - df$cumHarSD
 df$Cupper <- df$cumHar + df$cumHarSD
 ggplot(data = df, aes(x=Closure, y=cumHar)) + 
