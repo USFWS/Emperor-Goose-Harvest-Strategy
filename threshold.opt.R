@@ -1,4 +1,4 @@
-# function to iterate through closure thresholds and find cummulative harvest and population size or utility
+# function to iterate through closure thresholds and find cumulative harvest and population size or utility
 library(tidyverse)
 #load data
 out <- readRDS("data/out.RDS")
@@ -37,7 +37,7 @@ for(t in 1:length(t_red)){
                            Hred = out$sims.list$m.har[i],
                            sdH = out$sims.list$sigma.har[i],
                            Hp = out$sims.list$m.har.p,
-                           sdHp = out$sims.list$m.har.p,
+                           sdHp = out$sims.list$sd.har.p,
                            sdpop = out$sims.list$sigma.proc[i],
                            q = out$sims.list$q[i],
                            alpha1 = c(out$sims.list$alpha1[i, 5], 
