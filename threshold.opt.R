@@ -12,7 +12,7 @@ source("simulate.pop.R")
 t_red <- seq(0, 50000, by= 250) #250
 Nsamples <- 1000 #number of samples of the posterior 1000
 TimeHor <- 100 #time over which to calculate return/yield; time horizon 100
-discount <- 1 # 1 - time discount rate
+#discount <- 1 # 1 - time discount rate, not implemented
 df <- data.frame(Closure=t_red,
                  cumHar=rep(NA, length(t_red)),
                  pHunt=rep(NA, length(t_red)),
@@ -30,7 +30,8 @@ temp <- list(cumhar = numeric(), phunt = numeric(), mPop = numeric(),
              pExt = numeric())
 pick <- sample(1:length(out$sims.list$r.max), Nsamples)
 for(t in 1:length(t_red)){
-  for(i in 1:Nsamples){
+  ii <- 1
+  for(i in pick){
     reward <- project_pop(Tmax = TimeHor,
                            n1 = out$sims.list$N.tot[i,],
                            r = out$sims.list$r.max[i],
@@ -56,14 +57,15 @@ for(t in 1:length(t_red)){
                            DF = fit$df[2], #linear model degrees of freedom
                            crip = out$sims.list$c[i])
     
-    temp$cumhar[i] <- sum(reward$har, na.rm = TRUE)
-    temp$sdhar[i] <- sd(reward$har, na.rm = TRUE)
-    temp$GreenHar[i] <- sum(reward$har[reward$hunt == 3], na.rm = TRUE)
-    temp$pChange[i] <- sum( (reward$hunt[-1] != reward$hunt[-TimeHor]) / 
+    temp$cumhar[ii] <- sum(reward$har, na.rm = TRUE)
+    temp$sdhar[ii] <- sd(reward$har, na.rm = TRUE)
+    temp$GreenHar[ii] <- sum(reward$har[reward$hunt == 3], na.rm = TRUE)
+    temp$pChange[ii] <- sum( (reward$hunt[-1] != reward$hunt[-TimeHor]) / 
                                 length(reward$hunt[-1]))
-    temp$phunt[i] <- sum(reward$hunt %in% c(2,3), na.rm = TRUE)/length(reward$hunt)
-    temp$mPop[i] <- mean(reward$pop, na.rm = TRUE)
-    temp$pExt[i] <- ifelse(last(reward$pop) == 0, 1, 0)
+    temp$phunt[ii] <- sum(reward$hunt %in% c(2,3), na.rm = TRUE)/length(reward$hunt)
+    temp$mPop[ii] <- mean(reward$pop, na.rm = TRUE)
+    temp$pExt[ii] <- ifelse(last(reward$pop) == 0, 1, 0)
+    ii <- ii + 1
   }
   #calculate summary/utility over parameter samples
   #Use mean as surrogate utility function for now
