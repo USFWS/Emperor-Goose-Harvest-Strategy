@@ -98,6 +98,8 @@ project_pop <- function(
 }
 # #test it
 # out <- readRDS("data/out.RDS")
+# #load linear observation model
+# fit <- readRDS("data/fit.RDS")
 # #also need to run head of "theta.logistic.R to get fit object
 # pop <- project_pop( BETA = fit$coefficients[1], #linear model slope
 #                     SE = fit$coefficients[2], #linear model slope SE
