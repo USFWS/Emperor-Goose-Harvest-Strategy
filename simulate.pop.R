@@ -96,22 +96,37 @@ project_pop <- function(
   obs[Tmax+1] <- mean(rnorm(2, mu, sigma.obs))
   return(list(pop = pop[-1], obs = obs[-1], har = har[-1], hunt = hunt[-1]))
 }
-#test it
-out <- readRDS("data/out.RDS")
-#also need to run head of "theta.logistic.R to get fit object
-pop <- project_pop( BETA = fit$coefficients[1], #linear model slope
-                    SE = fit$coefficients[2], #linear model slope SE
-                    SIGMA = fit$sigma, #linear model RMSE
-                    DF = fit$df[2], 
-                    sdpop = out$mean$sigma.proc, 
-                    sdHp = list(green = out$mean$sd.har.p), 
-                    sdH = list(red = out$mean$sigma.har, 
-                               yellow = out$mean$sigma.har, 
-                               green = out$mean$sigma.har))
-pop <- as.data.frame(pop)
-pcols <- c("red", "orange", "green")
-plot(1:100, pop$pop, type = "b", pch = 16, col = pcols[pop$hunt])
-plot(1:100, pop$obs, type = "b", pch = 16, col = pcols[pop$hunt])
-abline(h=c(23000, 28000))
-plot(1:100, pop$har, type = "b", pch = 16, col = pcols[pop$hunt])
-
+# #test it
+# out <- readRDS("data/out.RDS")
+# #also need to run head of "theta.logistic.R to get fit object
+# pop <- project_pop( BETA = fit$coefficients[1], #linear model slope
+#                     SE = fit$coefficients[2], #linear model slope SE
+#                     SIGMA = fit$sigma, #linear model RMSE
+#                     DF = fit$df[2], 
+#                     sdpop = out$mean$sigma.proc, 
+#                     sdHp = list(green = out$mean$sd.har.p), 
+#                     sdH = list(red = out$mean$sigma.har, 
+#                                yellow = out$mean$sigma.har, 
+#                                green = out$mean$sigma.har))
+# pop <- as.data.frame(pop)
+# pcols <- c("red", "orange", "green")
+# plot(1:100, pop$pop, type = "b", pch = 16, col = pcols[pop$hunt])
+# plot(1:100, pop$obs, type = "b", pch = 16, col = pcols[pop$hunt])
+# abline(h=c(23000, 28000))
+# plot(1:100, pop$har, type = "b", pch = 16, col = pcols[pop$hunt])
+# #does function work if we set red and green threshold the same?
+# pop <- project_pop( BETA = fit$coefficients[1], #linear model slope
+#                     SE = fit$coefficients[2], #linear model slope SE
+#                     SIGMA = fit$sigma, #linear model RMSE
+#                     DF = fit$df[2], 
+#                     sdpop = out$mean$sigma.proc, 
+#                     threshold = list(red = 23000, green = 23000),
+#                     sdHp = list(green = out$mean$sd.har.p), 
+#                     sdH = list(red = out$mean$sigma.har, 
+#                                yellow = out$mean$sigma.har, 
+#                                green = out$mean$sigma.har))
+# plot(1:100, pop$pop, type = "b", pch = 16, col = pcols[pop$hunt])
+# plot(1:100, pop$obs, type = "b", pch = 16, col = pcols[pop$hunt])
+# abline(h=c(23000, 28000))
+# plot(1:100, pop$har, type = "b", pch = 16, col = pcols[pop$hunt])
+# #yes!
