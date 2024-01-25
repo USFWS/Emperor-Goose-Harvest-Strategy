@@ -242,6 +242,7 @@ out <- jags(jags.data, inits, parameters, "theta.logistic.emgo.jags",
 summary(unlist(out$Rhat))
 ##  convergence!
 saveRDS(out, file = "data/out.RDS")
+saveRDS(jags.data, file = "data/jags.data.RDS")
 ################################################################################
 # in hindsight (in 2022), above prior seems way too high, what if this is lowered?
 # jags.data2 <- jags.data

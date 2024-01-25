@@ -1,0 +1,380 @@
+---
+title: "Emperor Goose Modeling Update"
+author: "Erik Osnas"
+date: "Janurary, 2024"
+format: revealjs
+editor: visual
+---
+
+## Outline
+
+- Revision process
+- Define objectives
+- Develop alternatives
+- Analyze alternatives
+  - model and predictions
+  
+## Revision process
+
+- first plan went into effect 2017
+- harvest data 2017 to 2019
+- population survey data 2017 - now (ex. 2020)
+
+Is the current plan consistent with these data and our objectives?
+
+## Current strategy and history
+
+![](EMGOfig23.png)
+
+## Objectives
+
+(partial list)
+
+- harvest ($\uparrow$)
+- frequency of change between season types ($\downarrow$)
+- frequency of closure ($\downarrow$)
+- population viability (future population size) ($\uparrow$)
+
+## Develop alternatives
+
+- closure level ("red")
+- Conservation measures ("yellow")
+  - egg harvest closure
+  - season length restriction
+  - bag limits
+  - permit numbers
+
+## Analyize alternatives
+
+Population model
+
+- updates
+  - subsistence harvest data
+  - permit harvest data
+  - survey data - added observer effects
+  
+- predict performance on objectives
+
+## The Theta-logistic model
+State process
+$$E[N_{t+1}] = N_t + N_t \boldsymbol{r} \left[1 - \left(\frac{N_t}{\boldsymbol{K}}\right)^\boldsymbol{\theta} \right] - \frac{f(H_t, N_t)}{(1 - c)}$$
+$$N_{t+1} \sim LogNormal(log(E[N_{t+1}]), \boldsymbol\sigma_n)$$
+
+$$H_t \sim Normal(\bar H_s, \sigma_{h})$$
+  
+## The Theta-logistic model
+Observation process: data
+
+$$Y_{obs,t} \sim Normal(\boldsymbol{q} N_t, \sigma_{Yobs,t})$$
+$$H_{obs,t} \sim Normal(H_t, \sigma_{Hobs,t})$$
+
+## Survey Data and Model
+
+```{r}
+library(tidyverse)
+out <- readRDS("../data/out.RDS")
+jagsdf <- readRDS(file = "../data/jags.data.RDS")
+jagsdf <- jagsdf[c(1:5, 14, 16)]
+obsdf <- as.data.frame(jagsdf[c(1:2, 6:7)]) |>
+  mutate(y = units::drop_units(y) ) |>
+  mutate(upper = y + 2*sigma.obs, lower = y - 2*sigma.obs, 
+         Year = Year + 1984)
+hardf <- as.data.frame(jagsdf[3:5]) |>
+  mutate(upper = har.sur + 2*sigma.sur, lower = har.sur - 2*sigma.sur, 
+         Year = c(1985:2022), Season = c(rep("Open", 2), rep("Closed", 30), 
+                                         rep("Open", 6)))
+df <- data.frame(Year = c(1985:2019, 2021:2023), ITB = out$mean$N.est, upper = out$q97.5$N.est, 
+                 lower = out$q2.5$N.est)
+ggplot() + 
+  geom_ribbon(data = df, aes(x=Year, y = ITB, ymin=lower, ymax = upper), 
+              fill = "orange") + 
+  geom_line(data = df, aes(x = Year, y = ITB)) +
+  geom_pointrange(data = obsdf, aes(x=Year, y = y, ymin=lower, ymax = upper), 
+                  position = position_dodge2(width = 0.25)) + 
+  geom_pointrange(data = hardf, aes(x=Year, y = har.sur, ymin=lower, ymax = upper, 
+                                    col = Season)) + 
+  geom_point(data = hardf, aes(x = Year, y = har.p), shape = 17, col = 3) + 
+  labs(y = "Number")
+  
+  
+```
+
+## Harvest
+
+```{r}
+df <- data.frame(H_red = out$sims.list$m.har, H_green = out$sims.list$mu.green, 
+                 H_sd = out$sims.list$sigma.har, H_Perm = out$sims.list$m.har.p, 
+                 H_Perm_sd = out$sims.list$sd.har.p)
+ggplot(data = df) + 
+  geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
+  geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
+  geom_text(aes(x = 4500, y = 0.002, label="Closed"), col = "red") +
+  geom_text(aes(x = 6000, y = 0.00075, label="Open"), col = "green") +
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) 
+```
+  
+
+## Prediction
+
+![](population.sims.png)
+  
+
+## Alternatives to evaluate
+
+- open/closed ("green/red")
+  - close to current strategy (ex. egg closure)
+- open/conservation/closed ("green/yellow/red")
+  - yellow is midway between red and green
+  
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+df <- data.frame(H_red = out$sims.list$m.har, H_green = out$sims.list$mu.green, 
+                 H_sd = out$sims.list$sigma.har, H_Perm = out$sims.list$m.har.p, 
+                 H_Perm_sd = out$sims.list$sd.har.p)
+ggplot(data = df) + 
+  geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
+  geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000))
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+df <- mutate(df, H_yellow = H_red + (H_green - H_red)/2)
+ggplot(data = df) + 
+  geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
+  geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
+  geom_density(aes(x = H_yellow), alpha = 0.5, fill = "orange") + 
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000))
+```
+:::
+
+:::: 
+  
+## Alternatives to evaluate
+
+1. open/closed ("green/red")
+  - Where to put the closure threshold?
+2. open/conservation/closed ("green/yellow/red")
+  - Where to put the closure and conservation threshold?
+    (here we assume the action in "yellow" reduces harvest 1/2 way to closed)
+
+## Results: Open/Closed
+Expected population size in 100 years
+
+```{r}
+#make some reference figures
+#all closed
+temp <- data.frame(x = c(0, 0, 1, 1, 0), open = c(0, 1, 1, 0, 0))
+allred <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open), fill = "red") + theme_void() + theme(legend.position="none")
+ggsave("allred.png")
+allgreen <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open), fill = "green") + theme_void() + theme(legend.position="none")
+ggsave("allgreen.png")
+allyellow <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open), fill = "orange") + theme_void() + theme(legend.position="none")
+ggsave("allyellow.png")
+halfred <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open+c(0.5, 0, 0, 0.5, 0.5)),
+                                              fill = "green") +
+  geom_polygon(aes(x=x, y=0.5*open), fill = "red") + 
+  theme_void() + theme(legend.position="none")
+ggsave("halfred.png")
+
+df <- readRDS("../data/optim1.RDS")
+df$Clower <- df$mPop - df$mPopSD
+df$Cupper <- df$mPop + df$mPopSD
+dfmax0 <- filter(df, cumHar == max(cumHar))
+ggplot(data = df, aes(x=Closure, y=mPop)) + 
+  geom_ribbon(aes(x=Closure, ymin=Clower, ymax = Cupper), alpha=0.5, fill = "blue") +
+  geom_point()+
+  geom_smooth(method="gam", se=TRUE) + 
+  labs(y = "Mean population size in 100 years")
+```
+
+
+![](halfred.png){.absolute top=0 right=0 width="80" height="75"}
+
+## Results: Open/Closed
+Expected harvest per year over 100 years
+
+```{r}
+df$Clower <- df$cumHar - df$cumHarSD
+df$Cupper <- df$cumHar + df$cumHarSD
+ggplot(data = df, aes(x=Closure, y=cumHar)) + 
+  geom_ribbon(aes(x=Closure, ymin=Clower, ymax = Cupper), alpha=0.5, fill = "blue") +
+  geom_point()+
+  geom_smooth(method="gam", se=TRUE) + 
+  labs(y = "Mean annual harvest")
+```
+
+## Results: Open/Closed
+Frequency of open hunting over 100 years
+
+```{r}
+df$Clower <- df$pHunt - df$pHuntSD
+df$Clower <- ifelse(df$Clower < 0, 0, df$Clower)
+df$Cupper <- df$pHunt + df$pHuntSD
+df$Cupper <- ifelse(df$Cupper > 1, 1, df$Cupper)
+ggplot(data = df, aes(x=Closure, y=pHunt)) + 
+  geom_ribbon(aes(x=Closure, ymin=Clower, ymax = Cupper), alpha=0.5, fill = "blue") +
+  geom_point()+
+  geom_smooth(method="gam", se=TRUE) + 
+  coord_cartesian(ylim =c(0,1)) + 
+  labs(y = "Frequency of open hunting")
+```
+
+## Results: Open/Closed
+Frequency of extinction over 100 years
+
+```{r}
+ggplot(data = df, aes(x=Closure, y=pExt)) + 
+  geom_point()+
+  geom_smooth(method="gam", se=TRUE) + 
+  coord_cartesian(ylim =c(0,0.5)) + 
+  labs(y = "Frequency of extinction")
+```
+
+## Results: Open/Conservation/Closed
+Expected harvest per year over 100 years
+
+```{r}
+df <- readRDS("../data/optim2.RYG.RDS")
+df$Clower <- df$cumHar - df$cumHarSD
+df$Cupper <- df$cumHar + df$cumHarSD
+dfmax <- filter(df, cumHar == max(cumHar))
+library(viridis) 
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) + 
+  scale_fill_viridis(name = "Harvest") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+
+## Results: Open/Conservation/Closed
+Expected harvest per year over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) + 
+  scale_fill_viridis(name = "Harvest") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+![](allyellow.png){.absolute top=150 left=20 width="80" height="75"}
+![](allred.png){.absolute top=150 right=150 width="80" height="75"}
+![](allgreen.png){.absolute bottom=20 left=20 width="80" height="75"}
+![](halfred.png){.absolute top=400 left=425 width="80" height="75"}
+
+## Results: Open/Conservation/Closed
+Expected population size in 100 years
+
+```{r}
+df$Clower <- df$mPop - df$mPopSD
+df$Cupper <- df$mPop + df$mPopSD
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=mPop)) + 
+  scale_fill_viridis(name = "Population Size") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+
+## Results: Open/Conservation/Closed
+Frequency of open hunting over 100 years
+
+```{r}
+dfmax2 <- filter(df, pHunt == max(pHunt))
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=pHunt)) + 
+  scale_fill_viridis(name = "Pr(Open)") + 
+  geom_point(data = dfmax2, aes(x = Closure, y = Green), size = 2, col = "darkgrey") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+
+## Results: Open/Conservation/Closed
+Frequency of a changed hunting season over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=pChange)) + 
+  scale_fill_viridis(name = "Pr(Change)") + 
+  geom_point(data = dfmax2, aes(x = Closure, y = Green), size = 2, col = "darkgrey") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+
+## Results: Open/Conservation/Closed
+Frequency of extinction over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=pExt)) + 
+  scale_fill_viridis(name = "Pr(Extinction)") + 
+  geom_point(data = dfmax2, aes(x = Closure, y = Green), size = 2, col = "darkgrey") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+
+## Example alternatives to compare
+
+```{css}
+#| echo: false
+
+.reveal table {
+  font-size: smaller;
+}
+
+```
+
+```{r}
+dfmax3 <- filter(df, Closure == 23000, Green == 28000)
+dfmax4 <- filter(df, Closure == 23000, Green == 23000)
+
+alts <- rbind(relocate(mutate(dfmax0, Green = dfmax0$Closure), Green, 
+                       .after = Closure), 
+              dfmax, dfmax2, dfmax3, dfmax4) |>
+  rownames_to_column(var = "Name")
+knitr::kable(alts[,c(1:6, 9, 13)], digits = 2, col.names = c("Name", "Closure", "Green", "Ave. Har.", "Pr(Hunt)", "mean Pop.", "Pr(Change)", "Pr(Ext.)"))
+```
+
+## Harvest rate (2023) posterior from model
+$$h = H/N$$
+
+```{r}
+df <- data.frame(H = out$sims.list$har[,38] + out$sims.list$m.har.p, 
+                 c = out$sims.list$c[], 
+                 N = out$sims.list$N.tot[,38]) |>
+  mutate(K = H/(1 - c), k = K/N)
+P <- round(sum(df$k > 0.1)/dim(df)[1], 2)
+ggplot(data = df) +
+  geom_density(aes(x = k), fill = "gray", alpha = 0.5) + 
+  geom_text(aes(x = 0.1, y= 15, label = paste0("Pr(k > 0.1) = ", P)))
+```
+
+## 2023 population size posterior
+
+```{r}
+df <- mutate(df, N = out$sims.list$N.tot[,38])
+P <- round(sum(df$N > 2e05)/dim(df)[1], 2)
+ggplot(data = df) +
+  geom_density(aes(x = N), fill = "gray", alpha = 0.5) + 
+  geom_text(aes(x = 3e05, y= 4e-06, label = paste0("Pr(k > 200K) = ", P)))
+```
+
+## Population process SD posterior
+
+```{r}
+df <- mutate(df, Sigma = out$sims.list$sigma.proc)
+ggplot(data = df) +
+  geom_density(aes(x = Sigma), fill = "gray", alpha = 0.5)
+```
+
+## Theta posterior
+
+```{r}
+df <- mutate(df, Theta = out$sims.list$theta)
+ggplot(data = df) +
+  geom_density(aes(x = Theta), fill = "gray", alpha = 0.5)
+```
+
+## r_max posterior
+
+```{r}
+df <- mutate(df, r_max = out$sims.list$r.max)
+ggplot(data = df) +
+  geom_density(aes(x = r_max), fill = "gray", alpha = 0.5)
+```
