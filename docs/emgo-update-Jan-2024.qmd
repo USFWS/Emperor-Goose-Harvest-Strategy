@@ -74,13 +74,13 @@ jagsdf <- jagsdf[c(1:5, 14, 16)]
 obsdf <- as.data.frame(jagsdf[c(1:2, 6:7)]) |>
   mutate(y = units::drop_units(y) ) |>
   mutate(upper = y + 2*sigma.obs, lower = y - 2*sigma.obs, 
-         Year = Year + 1984)
+         Year = Year + 1984, Type = "Aerial Survey")
 hardf <- as.data.frame(jagsdf[3:5]) |>
   mutate(upper = har.sur + 2*sigma.sur, lower = har.sur - 2*sigma.sur, 
          Year = c(1985:2022), Season = c(rep("Open", 2), rep("Closed", 30), 
                                          rep("Open", 6)))
 df <- data.frame(Year = c(1985:2019, 2021:2023), ITB = out$mean$N.est, upper = out$q97.5$N.est, 
-                 lower = out$q2.5$N.est)
+                 lower = out$q2.5$N.est, Type = "Model")
 ggplot() + 
   geom_ribbon(data = df, aes(x=Year, y = ITB, ymin=lower, ymax = upper), 
               fill = "orange") + 
@@ -294,8 +294,7 @@ dfmax <- filter(df, cumHar == max(cumHar))
 library(viridis) 
 ggplot() +  
   geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) +
-  scale_fill_viridis(name = "Harvest") +
-  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+  scale_fill_viridis(name = "Harvest") 
 ```
 
 ![](ryg.png){.absolute top="100" right="0" width="80" height="75"}
@@ -307,8 +306,7 @@ Expected harvest per year over 100 years
 ```{r}
 ggplot() +  
   geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) + 
-  scale_fill_viridis(name = "Harvest") + 
-  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+  scale_fill_viridis(name = "Harvest") 
 ```
 
 . . .
@@ -410,12 +408,68 @@ dfmax4 <- filter(df, Closure == 23000, Green == 23000)
 dfmax3a <- filter(df, Closure == 16000, Green == dfmax2$Green)
 dfclose <- filter(df, Closure == 50000, Green == 50000)
 dfbuff <- filter(df, Closure == 20500, Green == dfmax$Green)
+dfbuff2 <- filter(df, Closure == 19500, Green == 19500)
 
 alts <- rbind(relocate(mutate(dfmax0, Green = dfmax0$Closure), Green, 
-                       .after = Closure), 
+                       .after = Closure), dfbuff2,
               dfmax4, dfmax3, dfmax, dfbuff, dfmax2, dfmax3a, dfclose) |>
   rownames_to_column(var = "Name")
-knitr::kable(alts[,c(1:6, 9, 13)], digits = 2, col.names = c("Name", "Closure", "Green", "Ave. Har.", "Pr(Hunt)", "mean Pop.", "Pr(Change)", "Pr(Ext.)"))
+knitr::kable(alts[,c(1:6, 9, 13)], digits = 2, col.names = c("Name", "Closure", "Green", "Mean Har.", "Pr(Hunt)", "Mean Pop.", "Pr(Change)", "Pr(Ext.)"))
+```
+
+. . .
+
+![](halfred.png){.absolute top="190" left="-30" width="40" height="35"}
+![](halfred.png){.absolute top="250" left="-30" width="40" height="35"}
+![](halfred.png){.absolute top="300" left="-30" width="40" height="35"}
+![](ryg.png){.absolute top="360" left="-30" width="40" height="35"}
+![](ryg.png){.absolute top="420" left="-30" width="40" height="35"}
+![](ryg.png){.absolute top="480" left="-30" width="40" height="35"}
+![](halfgreen.png){.absolute top="530" left="-30" width="40" height="35"}
+![](ryg.png){.absolute top="590" left="-30" width="40" height="35"}
+![](allred.png){.absolute top="650" left="-30" width="40" height="35"}
+
+## Alternatives to compare
+
+Expected harvest per year over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) + 
+  scale_fill_viridis(name = "Harvest") + 
+  geom_point(data = alts, aes(x = Closure, y = Green), size = 4, col = "red")
+```
+
+## Alternatives to compare
+
+Frequency of open hunting over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=pHunt)) + 
+  scale_fill_viridis(name = "Pr(Open)") + 
+  geom_point(data = alts, aes(x = Closure, y = Green), size = 4, col = "red")
+```
+
+## Alternatives to compare
+
+Frequency of extinction over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=pExt)) + 
+  scale_fill_viridis(name = "Pr(Extinction)") + 
+  geom_point(data = alts, aes(x = Closure, y = Green), size = 4, col = "red")
+```
+## Alternatives to compare
+
+Frequency of a changed hunting season over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=pChange)) + 
+  scale_fill_viridis(name = "Pr(Change)") + 
+  geom_point(data = alts, aes(x = Closure, y = Green), size = 4, col = "red")
 ```
 
 ## Kill rate (2023) posterior from model
@@ -434,6 +488,28 @@ ggplot(data = df) +
   labs(x = "Population size")
 ```
 
+## Potential Take Level posterior
+
+$$PTL_t = F \left ( \frac {r_{max} \theta}{(\theta + 1)} \right ) N_t $$
+
+```{r}
+F_fact <- 0.5
+ptl <- F_fact*((out$sims.list$r.max*out$sims.list$theta)/(out$sims.list$theta+1))*
+  out$sims.list$N.tot[,38]
+ptldf <-data.frame(PTL = ptl, SHI = out$sims.list$har[,38]/
+                     ((1 - out$sims.list$c) * ptl))
+ggplot(data = ptldf) + geom_density(aes(x = PTL), fill = "gray", alpha = 0.5)
+```
+
+## Sustainable Harvest Index
+
+```{r}
+P <- round(sum(ptldf$SHI > 1)/dim(ptldf)[1], 2)
+ggplot(data = ptldf) + geom_density(aes(x = SHI), fill = "gray", alpha = 0.5) + 
+  xlim(0, 5) + 
+  geom_text(aes(x = 2, y= 0.75, label = paste0("Pr(SHI > 1) = ", P)))
+```
+
 ## 2023 population size posterior
 
 ```{r}
@@ -441,7 +517,7 @@ df <- mutate(df, N = out$sims.list$N.tot[,38])
 P <- round(sum(df$N > 2e05)/dim(df)[1], 2)
 ggplot(data = df) +
   geom_density(aes(x = N), fill = "gray", alpha = 0.5) + 
-  geom_text(aes(x = 3e05, y= 4e-06, label = paste0("Pr(k > 200K) = ", P)))
+  geom_text(aes(x = 3e05, y= 4e-06, label = paste0("Pr(N > 200K) = ", P)))
 ```
 
 ## Population process SD posterior
