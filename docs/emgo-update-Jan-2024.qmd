@@ -8,17 +8,17 @@ editor: visual
 
 ## Outline
 
-- Revision process
-- Define objectives
-- Develop alternatives
-- Analyze alternatives
-  - model and predictions
-  
+-   Revision process
+-   Define objectives
+-   Develop alternatives
+-   Analyze alternatives
+    -   model and predictions
+
 ## Revision process
 
-- first plan went into effect 2017
-- harvest data 2017 to 2019
-- population survey data 2017 - now (ex. 2020)
+-   first plan went into effect 2017
+-   harvest data 2017 to 2019
+-   population survey data 2017 - now (ex. 2020)
 
 Is the current plan consistent with these data and our objectives?
 
@@ -30,43 +30,39 @@ Is the current plan consistent with these data and our objectives?
 
 (partial list)
 
-- harvest ($\uparrow$)
-- frequency of change between season types ($\downarrow$)
-- frequency of closure ($\downarrow$)
-- population viability (future population size) ($\uparrow$)
+-   harvest ($\uparrow$)
+-   frequency of change between season types ($\downarrow$)
+-   frequency of closure ($\downarrow$)
+-   population viability (future population size) ($\uparrow$)
 
 ## Develop alternatives
 
-- closure level ("red")
-- Conservation measures ("yellow")
-  - egg harvest closure
-  - season length restriction
-  - bag limits
-  - permit numbers
+-   closure level ("red")
+-   Conservation measures ("yellow")
+    -   egg harvest closure
+    -   season length restriction
+    -   bag limits
+    -   permit numbers
 
 ## Analyize alternatives
 
 Population model
 
-- updates
-  - subsistence harvest data
-  - permit harvest data
-  - survey data - added observer effects
-  
-- predict performance on objectives
+-   updates
+    -   subsistence harvest data
+    -   permit harvest data
+    -   survey data - added observer effects
+-   predict performance on objectives
 
 ## The Theta-logistic model
-State process
-$$E[N_{t+1}] = N_t + N_t \boldsymbol{r} \left[1 - \left(\frac{N_t}{\boldsymbol{K}}\right)^\boldsymbol{\theta} \right] - \frac{f(H_t, N_t)}{(1 - c)}$$
-$$N_{t+1} \sim LogNormal(log(E[N_{t+1}]), \boldsymbol\sigma_n)$$
 
-$$H_t \sim Normal(\bar H_s, \sigma_{h})$$
-  
-## The Theta-logistic model
+State process 
+
+$$N_{t+1} = N_t + N_t r \left[1 - \left(\frac{N_t}{K}\right)^\theta \right] - \frac{H_t(N_t)}{(1 - c)}$$ 
+
 Observation process: data
 
-$$Y_{obs,t} \sim Normal(\boldsymbol{q} N_t, \sigma_{Yobs,t})$$
-$$H_{obs,t} \sim Normal(H_t, \sigma_{Hobs,t})$$
+$$Y_{obs,t} \sim Normal(q N_t, \sigma_{Yobs,t})$$ $$H_{obs,t} \sim Normal(H_t, \sigma_{Hobs,t})$$
 
 ## Survey Data and Model
 
@@ -110,24 +106,18 @@ ggplot(data = df) +
   geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
   geom_text(aes(x = 4500, y = 0.002, label="Closed"), col = "red") +
   geom_text(aes(x = 6000, y = 0.00075, label="Open"), col = "green") +
-  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) 
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) + 
+  labs(x = "Harvest")
 ```
-  
-
-## Prediction
-
-![](population.sims.png)
-  
 
 ## Alternatives to evaluate
 
-- open/closed ("green/red")
-  - close to current strategy (ex. egg closure)
-- open/conservation/closed ("green/yellow/red")
-  - yellow is midway between red and green
-  
-:::: {.columns}
+-   open/closed ("green/red")
+    -   close to current strategy (ex. egg closure)
+-   open/conservation/closed ("green/yellow/red")
+    -   yellow is midway between red and green
 
+::: columns
 ::: {.column width="50%"}
 ```{r}
 df <- data.frame(H_red = out$sims.list$m.har, H_green = out$sims.list$mu.green, 
@@ -136,7 +126,8 @@ df <- data.frame(H_red = out$sims.list$m.har, H_green = out$sims.list$mu.green,
 ggplot(data = df) + 
   geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
   geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
-  scale_x_continuous(breaks = seq(0, 10000, by = 1000))
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) + 
+  labs(x = "Harvest")
 ```
 :::
 
@@ -147,22 +138,19 @@ ggplot(data = df) +
   geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
   geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
   geom_density(aes(x = H_yellow), alpha = 0.5, fill = "orange") + 
-  scale_x_continuous(breaks = seq(0, 10000, by = 1000))
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) + 
+  labs(x = "Harvest")
 ```
 :::
+:::
 
-:::: 
-  
+## Prediction
+
+![](population.sims.png)
+
 ## Alternatives to evaluate
 
-1. open/closed ("green/red")
-  - Where to put the closure threshold?
-2. open/conservation/closed ("green/yellow/red")
-  - Where to put the closure and conservation threshold?
-    (here we assume the action in "yellow" reduces harvest 1/2 way to closed)
-
-## Results: Open/Closed
-Expected population size in 100 years
+1.  Where to put the closure threshold?
 
 ```{r}
 #make some reference figures
@@ -174,12 +162,45 @@ allgreen <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open), fill = "green")
 ggsave("allgreen.png")
 allyellow <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open), fill = "orange") + theme_void() + theme(legend.position="none")
 ggsave("allyellow.png")
+redyellow <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open+c(0.5, 0, 0, 0.5, 0.5)),
+                                              fill = "orange") +
+  geom_polygon(aes(x=x, y=0.5*open), fill = "red") + 
+  theme_void() + theme(legend.position="none")
+ggsave("redyellow.png")
 halfred <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open+c(0.5, 0, 0, 0.5, 0.5)),
                                               fill = "green") +
   geom_polygon(aes(x=x, y=0.5*open), fill = "red") + 
   theme_void() + theme(legend.position="none")
 ggsave("halfred.png")
+halfgreen <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open+c(0.5, 0, 0, 0.5, 0.5)),
+                                              fill = "green") +
+  geom_polygon(aes(x=x, y=0.5*open), fill = "orange") + 
+  theme_void() + theme(legend.position="none")
+ggsave("halfgreen.png")
+ryg <- ggplot(data = temp) + geom_polygon(aes(x=x, y=open+c(0.5, 0, 0, 0.5, 0.5)),
+                                              fill = "green") +
+  geom_polygon(aes(x=x, y=0.5*open), fill = "red") + 
+  geom_polygon(aes(x=x, y=c(0.33, -0.33, -0.33, 0.33, 0.33)+open), fill = "orange") + 
+  theme_void() + theme(legend.position="none")
+ggsave("ryg.png")
 
+df <- data.frame(H_red = out$sims.list$m.har, H_green = out$sims.list$mu.green, 
+                 H_sd = out$sims.list$sigma.har, H_Perm = out$sims.list$m.har.p, 
+                 H_Perm_sd = out$sims.list$sd.har.p)
+ggplot(data = df) + 
+  geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
+  geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) + 
+  labs(x = "Harvest")
+```
+
+![](halfred.png){.absolute top="100" right="0" width="80" height="75"}
+
+## Results: Open/Closed
+
+Expected population size in 100 years
+
+```{r}
 df <- readRDS("../data/optim1.RDS")
 df$Clower <- df$mPop - df$mPopSD
 df$Cupper <- df$mPop + df$mPopSD
@@ -191,10 +212,10 @@ ggplot(data = df, aes(x=Closure, y=mPop)) +
   labs(y = "Mean population size in 100 years")
 ```
 
-
-![](halfred.png){.absolute top=0 right=0 width="80" height="75"}
+![](halfred.png){.absolute top="100" right="0" width="80" height="75"}
 
 ## Results: Open/Closed
+
 Expected harvest per year over 100 years
 
 ```{r}
@@ -207,7 +228,10 @@ ggplot(data = df, aes(x=Closure, y=cumHar)) +
   labs(y = "Mean annual harvest")
 ```
 
+![](halfred.png){.absolute top="100" right="0" width="80" height="75"}
+
 ## Results: Open/Closed
+
 Frequency of open hunting over 100 years
 
 ```{r}
@@ -223,7 +247,10 @@ ggplot(data = df, aes(x=Closure, y=pHunt)) +
   labs(y = "Frequency of open hunting")
 ```
 
+![](halfred.png){.absolute top="100" right="0" width="80" height="75"}
+
 ## Results: Open/Closed
+
 Frequency of extinction over 100 years
 
 ```{r}
@@ -234,7 +261,29 @@ ggplot(data = df, aes(x=Closure, y=pExt)) +
   labs(y = "Frequency of extinction")
 ```
 
+![](halfred.png){.absolute top="100" right="0" width="80" height="75"}
+
+## Alternatives to evaluate
+
+2.  Where to put the closure and green thresholds?
+
+```{r}
+df <- data.frame(H_red = out$sims.list$m.har, H_green = out$sims.list$mu.green, 
+                 H_sd = out$sims.list$sigma.har, H_Perm = out$sims.list$m.har.p, 
+                 H_Perm_sd = out$sims.list$sd.har.p)
+df <- mutate(df, H_yellow = H_red + (H_green - H_red)/2)
+ggplot(data = df) + 
+  geom_density(aes(x = H_red), alpha = 0.5, fill = "red") + 
+  geom_density(aes(x = H_green), alpha = 0.5, fill = "green") + 
+  geom_density(aes(x = H_yellow), alpha = 0.5, fill = "orange") + 
+  scale_x_continuous(breaks = seq(0, 10000, by = 1000)) + 
+  labs(x = "Harvest")
+```
+
+![](ryg.png){.absolute top="100" right="0" width="80" height="75"}
+
 ## Results: Open/Conservation/Closed
+
 Expected harvest per year over 100 years
 
 ```{r}
@@ -244,12 +293,15 @@ df$Cupper <- df$cumHar + df$cumHarSD
 dfmax <- filter(df, cumHar == max(cumHar))
 library(viridis) 
 ggplot() +  
-  geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) + 
-  scale_fill_viridis(name = "Harvest") + 
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) +
+  scale_fill_viridis(name = "Harvest") +
   geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
 ```
 
+![](ryg.png){.absolute top="100" right="0" width="80" height="75"}
+
 ## Results: Open/Conservation/Closed
+
 Expected harvest per year over 100 years
 
 ```{r}
@@ -258,12 +310,41 @@ ggplot() +
   scale_fill_viridis(name = "Harvest") + 
   geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
 ```
-![](allyellow.png){.absolute top=150 left=20 width="80" height="75"}
-![](allred.png){.absolute top=150 right=150 width="80" height="75"}
-![](allgreen.png){.absolute bottom=20 left=20 width="80" height="75"}
-![](halfred.png){.absolute top=400 left=425 width="80" height="75"}
+
+. . .
+
+![](allred.png){.absolute top="150" right="150" width="80" height="75"}
+. . .
+
+![](allgreen.png){.absolute bottom="20" left="20" width="80" height="75"}
+
+. . .
+
+![](allyellow.png){.absolute top="150" left="20" width="80" height="75"}
+
+. . .
+
+![](redyellow.png){.absolute top="150" left="425" width="80" height="75"}
+![](halfgreen.png){.absolute bottom="225" left="20" width="80" height="75"}
+![](halfred.png){.absolute top="400" left="425" width="80" height="75"}
+
+. . .
+
+![](ryg.png){.absolute top="300" left="350" width="80" height="75"}
 
 ## Results: Open/Conservation/Closed
+
+Expected harvest per year over 100 years
+
+```{r}
+ggplot() +  
+  geom_tile(data=df, aes(x=Closure, y=Green, fill=cumHar)) + 
+  scale_fill_viridis(name = "Harvest") + 
+  geom_point(data = dfmax, aes(x = Closure, y = Green), size = 2)
+```
+
+## Results: Open/Conservation/Closed
+
 Expected population size in 100 years
 
 ```{r}
@@ -276,6 +357,7 @@ ggplot() +
 ```
 
 ## Results: Open/Conservation/Closed
+
 Frequency of open hunting over 100 years
 
 ```{r}
@@ -288,6 +370,7 @@ ggplot() +
 ```
 
 ## Results: Open/Conservation/Closed
+
 Frequency of a changed hunting season over 100 years
 
 ```{r}
@@ -299,6 +382,7 @@ ggplot() +
 ```
 
 ## Results: Open/Conservation/Closed
+
 Frequency of extinction over 100 years
 
 ```{r}
@@ -323,16 +407,20 @@ ggplot() +
 ```{r}
 dfmax3 <- filter(df, Closure == 23000, Green == 28000)
 dfmax4 <- filter(df, Closure == 23000, Green == 23000)
+dfmax3a <- filter(df, Closure == 16000, Green == dfmax2$Green)
+dfclose <- filter(df, Closure == 50000, Green == 50000)
+dfbuff <- filter(df, Closure == 20500, Green == dfmax$Green)
 
 alts <- rbind(relocate(mutate(dfmax0, Green = dfmax0$Closure), Green, 
                        .after = Closure), 
-              dfmax, dfmax2, dfmax3, dfmax4) |>
+              dfmax4, dfmax3, dfmax, dfbuff, dfmax2, dfmax3a, dfclose) |>
   rownames_to_column(var = "Name")
 knitr::kable(alts[,c(1:6, 9, 13)], digits = 2, col.names = c("Name", "Closure", "Green", "Ave. Har.", "Pr(Hunt)", "mean Pop.", "Pr(Change)", "Pr(Ext.)"))
 ```
 
-## Harvest rate (2023) posterior from model
-$$h = H/N$$
+## Kill rate (2023) posterior from model
+
+$$k = K/N$$
 
 ```{r}
 df <- data.frame(H = out$sims.list$har[,38] + out$sims.list$m.har.p, 
@@ -342,7 +430,8 @@ df <- data.frame(H = out$sims.list$har[,38] + out$sims.list$m.har.p,
 P <- round(sum(df$k > 0.1)/dim(df)[1], 2)
 ggplot(data = df) +
   geom_density(aes(x = k), fill = "gray", alpha = 0.5) + 
-  geom_text(aes(x = 0.1, y= 15, label = paste0("Pr(k > 0.1) = ", P)))
+  geom_text(aes(x = 0.1, y= 15, label = paste0("Pr(k > 0.1) = ", P))) + 
+  labs(x = "Population size")
 ```
 
 ## 2023 population size posterior
@@ -377,4 +466,13 @@ ggplot(data = df) +
 df <- mutate(df, r_max = out$sims.list$r.max)
 ggplot(data = df) +
   geom_density(aes(x = r_max), fill = "gray", alpha = 0.5)
+```
+
+## Hunter functional response
+
+```{r}
+df <- data.frame(x = seq(0, 150000, by = 100)) |> 
+  mutate(H = 1 - exp(- 0.0001*x))
+
+ggplot(data = df, aes(x = x, y = H)) + geom_line() 
 ```
