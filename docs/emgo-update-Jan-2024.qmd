@@ -414,6 +414,7 @@ alts <- rbind(relocate(mutate(dfmax0, Green = dfmax0$Closure), Green,
                        .after = Closure), dfbuff2,
               dfmax4, dfmax3, dfmax, dfbuff, dfmax2, dfmax3a, dfclose) |>
   rownames_to_column(var = "Name")
+
 knitr::kable(alts[,c(1:6, 9, 13)], digits = 2, col.names = c("Name", "Closure", "Green", "Mean Har.", "Pr(Hunt)", "Mean Pop.", "Pr(Change)", "Pr(Ext.)"))
 ```
 
