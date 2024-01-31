@@ -2,7 +2,9 @@
 title: "Emperor Goose Modeling Update"
 author: "Erik Osnas"
 date: "Janurary, 2024"
-format: revealjs
+format: 
+  revealjs: 
+    embed-resources: true
 editor: visual
 ---
 
